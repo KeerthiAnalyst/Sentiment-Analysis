@@ -1,0 +1,135 @@
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+df=pd.read_csv("Reviews.csv")
+df.head()
+df.info()
+df.Summary.head(5)
+df.Text.head(5)
+df1=df['Text'].iloc[3]
+df1
+import nltk
+nltk.download('stopwords')
+from nltk.corpus import stopwords
+# for lemma,stopwords
+from textblob import TextBlob
+from textblob import Word 
+df['Text']=df['Text'].apply(lambda x:" ".join(x.lower()for x in x.split()))
+# if x is the string "Hello world", then x.split() would return the list ['Hello', 'world']. By default, split() separates the string
+# at each whitespace character (space, tab, newline) then lower it.
+df['Text'].head(4)
+df['Text']=df['Text'].str.replace(r'[^\w\s]',' ')
+#  the code removes punctuation and special characters from the 'Text' column, replacing them with spaces. 
+df['Text'].head(4)
+stop = stopwords.words('english')
+
+# Removing stopwords from the 'Text' column
+df['Text'] = df['Text'].apply(lambda x: " ".join(x for x in x.split() if x not in stop))
+
+# Displaying the first 5 elements of the modified 'Text' column
+print(df['Text'].head(5))
+import spacy
+from spacy.lang.en.stop_words import STOP_WORDS
+
+# Assuming 'text' is your DataFrame column containing text data
+df['Text'] = df['Text'].apply(lambda x: " ".join(word for word in x.split() if word.lower() not in STOP_WORDS))
+# spaCy has its own approach to stopword removal. Stopwords are common words that are often excluded from text processing tasks 
+# because they are considered to carry little meaningful information.spaCy's language models come with their own set of stopwords,
+# and you can use them to filter out these common words from your text data.
+# en.stop_words import STOP_WORDS This line specifically imports the set of English stopwords
+df['Text'].head(5)
+from tqdm import tqdm
+from textblob import TextBlob
+# lemmatization is a preprocessing step that contributes to the overall quality of text data for various NLP tasks. 
+# It simplifies text, reduces redundancy,
+# and facilitates more effective analysis and understanding of natural language.
+#tqdm for loop 
+
+df['Text'] = df['Text'].apply(lambda x: " ".join([Word(x).lemmatize() for x in x.split()]))
+datas=df
+datas.dropna(inplace=True)
+datas.shape
+df.shape
+datas.Score.hist(bins=5,grid=False)
+plt.show()
+print(datas.groupby('Score').count().Id) 
+#The reason for sampling data, especially in machine learning or data analysis tasks, is to create a balanced dataset or to reduce the overall size 
+#of the dataset for quicker processing. If you're dealing with imbalanced classes, where one class has significantly more samples than the other,
+#sampling can help ensure that your model is trained on a representative set of examples from each class.
+Score_1 = datas[datas['Score']==1].sample(n=29743)
+Score_2 = datas[datas['Score']==2].sample(n=29743)
+Score_3 = datas[datas['Score']==3].sample(n=29743)
+Score_4 = datas[datas['Score']==4].sample(n=29743)
+Score_5 = datas[datas['Score']==5].sample(n=29743)
+bal_data=pd.concat([Score_1,Score_2,Score_3,Score_4,Score_5])
+# you might want to concatenate (combine) this subset with other subsets or the original dataset. This process is often done to balance the dataset 
+#if you have different classes with imbalanced sample sizes.
+bal_data.reset_index(drop=True,inplace=True)
+bal_data.shape
+bal_data.head()
+bal_data.tail()
+from wordcloud import WordCloud
+from wordcloud import STOPWORDS
+new=bal_data.Summary.str.cat()
+# concat because all strings of words into single unit
+WordCloud=WordCloud(background_color ='white').generate(new)
+plt.figure(figsize=(10,8))
+plt.imshow(WordCloud,interpolation='bilinear')
+plt.axis("off")
+plt.title("OVER_ALL SCORE")
+plt.show()
+bal_data[bal_data['Score']==1]['Text'].loc[1]
+negative_reviews=bal_data[bal_data['Score'].isin([1,2])]
+positive_reviews=bal_data[bal_data['Score'].isin([4,5])]
+negative_review_str=negative_reviews.Summary.str.cat()
+positive_review_str=positive_reviews.Summary.str.cat()
+from wordcloud import WordCloud
+from wordcloud import STOPWORDS
+WordCloud_negative=WordCloud(background_color ='white').generate(negative_review_str)
+from wordcloud import WordCloud
+from wordcloud import STOPWORDS
+WordCloud_positive=WordCloud(background_color ='white').generate(positive_review_str)
+import matplotlib.pyplot as plt
+fig=plt.figure(figsize=(10,10))
+ax1=fig.add_subplot(2,1,2)
+ax1.imshow(WordCloud_negative,interpolation='bilinear')
+ax1.axis("off")
+ax1.set_title("REVIEWS WITH NEGATIVE SCORE",fontsize=20)
+import matplotlib.pyplot as plt
+fig=plt.figure(figsize=(10,10))
+ax1=fig.add_subplot(2,1,2)
+ax1.imshow(WordCloud_positive,interpolation='bilinear')
+ax1.axis("off")
+ax1.set_title("REVIEWS WITH POSITIVE SCORE",fontsize=20)
+!pip install vaderSentiment
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+import seaborn as sns
+import re 
+import os
+import sys
+import ast
+plt.style.use('fivethirtyeight')
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+analyzer=SentimentIntensityAnalyzer()
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from tqdm import tqdm
+import pandas as pd
+
+analyzer=SentimentIntensityAnalyzer()
+
+emptyline=[]
+for row in tqdm(df['Text'],total=len(df),desc='AnalzingSentiment'):
+         vs=analyzer.polarity_scores(row)
+         emptyline.append(vs)
+
+df_Sentiment=pd.DataFrame(emptyline)
+df_Sentiment.head(5)
+np.where(df_Sentiment['compound']>=0,'positive','negative')
+df_Sentiment['sentiment_score']=np.where(df_Sentiment['compound']>=0,'positive','negative')
+df_Sentiment.head(5)
+df_Sentiment['sentiment_score'].value_counts()
+results= df_Sentiment['sentiment_score'].value_counts()
+results.plot(kind='bar',rot=0);
